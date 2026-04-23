@@ -255,6 +255,7 @@ def call(
     *args: Any,
     retry_policy: Sequence[RetryPolicy] | None = None,
     cache_policy: CachePolicy | None = None,
+    metadata: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> SyncAsyncFuture[T]:
     config = get_config()
@@ -265,5 +266,6 @@ def call(
         retry_policy=retry_policy,
         cache_policy=cache_policy,
         callbacks=config["callbacks"],
+        metadata=metadata,
     )
     return fut

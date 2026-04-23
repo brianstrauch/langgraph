@@ -15,6 +15,7 @@ from random import randrange
 from typing import Annotated, Any, Literal, get_type_hints
 
 import pytest
+from langchain_core.callbacks.base import BaseCallbackHandler
 from langchain_core.language_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
 from langchain_core.runnables import (
@@ -1288,6 +1289,28 @@ def test_imp_task(
         "11answer",
     ]
     assert mapper_calls == 2
+
+
+def test_imp_task_metadata() -> None:
+    @task(metadata={"foo": "bar"})
+    def my_task(number: int) -> int:
+        return number * 2
+
+    @entrypoint()
+    def my_workflow(number: int) -> int:
+        return my_task(number).result()
+
+    seen: list[dict] = []
+
+    class _Handler(BaseCallbackHandler):
+        def on_chain_start(self, serialized, inputs, *, metadata=None, **kwargs):
+            if metadata is not None:
+                seen.append(dict(metadata))
+
+    assert my_workflow.invoke(3, {"callbacks": [_Handler()]}) == 6
+
+    task_metadata = next(m for m in seen if m.get("langgraph_node") == "my_task")
+    assert task_metadata.get("foo") == "bar"
 
 
 def test_imp_nested(

@@ -538,6 +538,7 @@ def _call(
     retry_policy: Sequence[RetryPolicy] | None = None,
     cache_policy: CachePolicy | None = None,
     callbacks: Callbacks = None,
+    metadata: dict[str, Any] | None = None,
     futures: weakref.ref[FuturesDict],
     schedule_task: Callable[
         [PregelExecutableTask, int, Call | None], PregelExecutableTask | None
@@ -560,6 +561,7 @@ def _call(
             retry_policy=retry_policy,
             cache_policy=cache_policy,
             callbacks=callbacks,
+            metadata=metadata,
         ),
     ):
         if fut := next(
@@ -625,6 +627,7 @@ def _acall(
     retry_policy: Sequence[RetryPolicy] | None = None,
     cache_policy: CachePolicy | None = None,
     callbacks: Callbacks = None,
+    metadata: dict[str, Any] | None = None,
     # injected dependencies
     futures: weakref.ref[FuturesDict],
     schedule_task: Callable[
@@ -658,6 +661,7 @@ def _acall(
             retry_policy=retry_policy,
             cache_policy=cache_policy,
             callbacks=callbacks,
+            metadata=metadata,
             futures=futures,
             schedule_task=schedule_task,
             submit=submit,
@@ -679,6 +683,7 @@ async def _acall_impl(
     retry_policy: Sequence[RetryPolicy] | None = None,
     cache_policy: CachePolicy | None = None,
     callbacks: Callbacks = None,
+    metadata: dict[str, Any] | None = None,
     # injected dependencies
     futures: weakref.ref[FuturesDict[asyncio.Future, asyncio.Event]],
     schedule_task: Callable[
@@ -703,6 +708,7 @@ async def _acall_impl(
                 retry_policy=retry_policy,
                 cache_policy=cache_policy,
                 callbacks=callbacks,
+                metadata=metadata,
             ),
         ):
             if fut := next(

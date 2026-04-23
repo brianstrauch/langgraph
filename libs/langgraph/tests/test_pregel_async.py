@@ -19,6 +19,7 @@ from typing import (
 from uuid import UUID
 
 import pytest
+from langchain_core.callbacks.base import AsyncCallbackHandler
 from langchain_core.language_models import GenericFakeChatModel
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig, RunnableLambda, RunnablePassthrough
@@ -2446,6 +2447,28 @@ async def test_imp_sync_from_async(
         {"baz": {"a": "0foobarbaz", "c": "something else"}},
         {"graph": {"a": "0foobarbaz", "c": "something else"}},
     ]
+
+
+async def test_imp_task_metadata() -> None:
+    @task(metadata={"foo": "bar"})
+    async def my_task(number: int) -> int:
+        return number * 2
+
+    @entrypoint()
+    async def my_workflow(number: int) -> int:
+        return await my_task(number)
+
+    seen: list[dict] = []
+
+    class _Handler(AsyncCallbackHandler):
+        async def on_chain_start(self, serialized, inputs, *, metadata=None, **kwargs):
+            if metadata is not None:
+                seen.append(dict(metadata))
+
+    assert await my_workflow.ainvoke(3, {"callbacks": [_Handler()]}) == 6
+
+    task_metadata = next(m for m in seen if m.get("langgraph_node") == "my_task")
+    assert task_metadata.get("foo") == "bar"
 
 
 @NEEDS_CONTEXTVARS

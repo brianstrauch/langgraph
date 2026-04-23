@@ -114,13 +114,21 @@ class PregelTaskWrites(NamedTuple):
 
 
 class Call:
-    __slots__ = ("func", "input", "retry_policy", "cache_policy", "callbacks")
+    __slots__ = (
+        "func",
+        "input",
+        "retry_policy",
+        "cache_policy",
+        "callbacks",
+        "metadata",
+    )
 
     func: Callable
     input: tuple[tuple[Any, ...], dict[str, Any]]
     retry_policy: Sequence[RetryPolicy] | None
     cache_policy: CachePolicy | None
     callbacks: Callbacks
+    metadata: dict[str, Any] | None
 
     def __init__(
         self,
@@ -130,12 +138,14 @@ class Call:
         retry_policy: Sequence[RetryPolicy] | None,
         cache_policy: CachePolicy | None,
         callbacks: Callbacks,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         self.func = func
         self.input = input
         self.retry_policy = retry_policy
         self.cache_policy = cache_policy
         self.callbacks = callbacks
+        self.metadata = metadata
 
 
 def should_interrupt(
@@ -792,6 +802,8 @@ def prepare_push_task_functional(
         "langgraph_path": in_progress_task_path,
         "langgraph_checkpoint_ns": task_checkpoint_ns,
     }
+    if call.metadata:
+        metadata.update(call.metadata)
     if task_id_checksum is not None:
         assert task_id == task_id_checksum, f"{task_id} != {task_id_checksum}"
     if for_execution:
